@@ -1,0 +1,43 @@
+<template id="tpl-wl-card">
+  <div class="space-y-4">
+    <canvas width="3200" height="1800" class="aspect-video w-full rounded-3xl border-4 border-white shadow-[0_24px_60px_-24px_rgba(42,138,160,0.8)]"></canvas>
+    <div class="flex flex-wrap gap-3">
+      <button type="button" class="btn btn-lantern" data-act="download">Download card (16:9)</button>
+      <a data-act="share" target="_blank" rel="noopener noreferrer" class="btn" href="https://x.com/intent/post">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23 5.45-6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"></path></svg>
+        Share on X
+      </a>
+      <button type="button" class="btn" data-act="copy-image">Copy image</button>
+    </div>
+    <div class="text-left">
+      <label for="wl-caption" class="label text-current/60">Caption for X (edit if you like)</label>
+      <textarea id="wl-caption" rows="5" class="field mt-1 resize-y text-sm"></textarea>
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <button type="button" class="btn px-4 py-2 text-sm" data-act="copy-caption">Copy caption</button>
+        <p class="text-xs text-current/55">Download the card first, then attach it to your post on X (X can't attach images from a link).</p>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="tpl-apply-done">
+  <div class="glass animate-pop p-6 md:p-10">
+    <div class="text-center">
+      <div class="text-6xl" data-emoji aria-hidden="true">🏮</div>
+      <h2 class="mt-4 font-display text-3xl font-bold" data-title>You're at the river's edge!</h2>
+      <p class="mt-3" data-body></p>
+    </div>
+    <div class="mt-8" data-card></div>
+    <p data-msg class="mt-4 hidden text-center text-sm text-current/70"></p>
+    <p class="mt-6 text-center text-sm text-current/65">Check your status anytime on the <a href="/status" class="font-semibold text-sky underline">WL status page</a>.</p>
+  </div>
+</template>
+<template id="tpl-status-none">
+  <div class="glass p-6 text-center">
+    <p class="font-display text-2xl font-semibold">No soul found.</p>
+    <p class="mt-2 text-current/70">We couldn't find that wallet or X username. Double-check it, or apply if you haven't yet.</p>
+    <a href="/apply" class="btn btn-lantern mt-4">Apply for whitelist</a>
+  </div>
+</template>
+<template id="tpl-status-error">
+  <p role="alert" class="glass border-peach/40 p-5 text-peach-deep" data-msg></p>
+</template>

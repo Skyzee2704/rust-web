@@ -1,0 +1,12 @@
+<footer class="section-dark relative overflow-hidden border-t border-sky/20 bg-navy px-4 pb-8 pt-12">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3">
+    <a href="/#legends" class="btn px-4 py-2 text-sm">Legends</a>
+    <a href="/apply" class="btn px-4 py-2 text-sm">Apply</a>
+    <a href="{{ shell.x_url }}" target="_blank" rel="noopener noreferrer" class="btn px-4 py-2 text-sm">X</a>
+    {% if shell.has_opensea %}
+    <a href="{{ shell.opensea_url }}" target="_blank" rel="noopener noreferrer" class="btn px-4 py-2 text-sm">OpenSea</a>
+    {% endif %}
+  </div>
+  <p aria-hidden="true" class="mt-10 select-none bg-gradient-to-b from-sky-light/80 via-sky-light/35 to-transparent bg-clip-text text-center font-display font-semibold leading-none text-transparent" style="font-size: clamp(3rem, 17vw, 15rem)">{{ shell.site_name_upper }}</p>
+  <p class="label mt-6 text-center text-[0.62rem] text-current/40">© {{ shell.year }} {{ shell.site_name }} · nothing here is financial advice · drink responsibly</p>
+</footer>

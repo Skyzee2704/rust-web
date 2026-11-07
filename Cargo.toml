@@ -1,0 +1,36 @@
+[package]
+name = "letheans"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Letheans NFT PFP website, Rust port of the Next.js app"
+
+[dependencies]
+async-trait = "0.1"
+axum = "0.7"
+base64 = "0.22"
+chrono = "0.4"
+dotenvy = "0.15"
+hex = "0.4"
+hmac = "0.12"
+jsonwebtoken = "9"
+rand = "0.8"
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+sha2 = "0.10"
+tiny-keccak = { version = "2", features = ["keccak"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "set-header", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = "2"
+urlencoding = "2"
+askama = "0.14"
+
+[profile.release]
+lto = false
+codegen-units = 16
