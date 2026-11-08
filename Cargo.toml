@@ -4,14 +4,17 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 description = "Letheans NFT PFP website, Rust port of the Next.js app"
+default-run = "letheans"
 
 [dependencies]
 async-trait = "0.1"
-axum = "0.7"
+axum = "0.8"
 base64 = "0.22"
 chrono = "0.4"
 dotenvy = "0.15"
+http-body-util = "0.1"
 hex = "0.4"
+include_dir = "0.7"
 hmac = "0.12"
 jsonwebtoken = "9"
 rand = "0.8"
@@ -25,12 +28,24 @@ tiny-keccak = { version = "2", features = ["keccak"] }
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["fs", "set-header", "trace"] }
+vercel_runtime = { version = "2.4", features = ["axum"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2"
 urlencoding = "2"
 askama = "0.14"
 
+[[bin]]
+name = "letheans"
+path = "src/main.rs"
+
+# Vercel Rust runtime entry. The file stem is the function path `/api/app`.
+[[bin]]
+name = "app"
+path = "api/app.rs"
+
 [profile.release]
-lto = false
-codegen-units = 16
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+strip = "symbols"

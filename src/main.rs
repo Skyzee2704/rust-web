@@ -1,17 +1,11 @@
 use std::net::SocketAddr;
 
 use letheans::state::AppState;
-use letheans::{router, sheets};
-
-fn load_env() {
-    // .env first, then .env.local overrides (same order as Next.js).
-    let _ = dotenvy::from_filename(".env");
-    let _ = dotenvy::from_filename_override(".env.local");
-}
+use letheans::{load_dotenv, router, sheets};
 
 #[tokio::main]
 async fn main() {
-    load_env();
+    load_dotenv();
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
