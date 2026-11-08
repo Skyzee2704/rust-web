@@ -1,0 +1,23 @@
+<header class="sticky top-0 z-40 px-3 pt-3">
+  <div id="nav-bar" class="mx-auto flex items-center justify-between gap-3 transition-all duration-500 max-w-6xl border border-transparent px-2 py-3">
+    <a href="/" class="flex items-center gap-2 font-display text-xl font-semibold tracking-wide">
+      <span class="inline-block h-9 w-9 overflow-hidden rounded-full bg-navy shadow-[0_0_18px_-2px_rgba(121,211,223,0.8)] ring-2 ring-white/80">
+        <img src="/logo.png" alt="Letheans logo" class="h-full w-full object-cover">
+      </span>
+      {{ shell.site_name }}
+    </a>
+    <nav aria-label="Main" class="label hidden gap-7 text-navy/70 md:flex">
+      <a href="/#lore" class="transition hover:text-mint">Lore</a>
+      <a href="/#legends" class="transition hover:text-mint">Legends</a>
+      <a href="/#join" class="transition hover:text-mint">How to join</a>
+      <a href="/#mint" class="transition hover:text-mint">Mint</a>
+      <a href="/#faq" class="transition hover:text-mint">FAQ</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <a href="{{ shell.x_url }}" target="_blank" rel="noopener noreferrer" aria-label="X" class="btn h-10 w-10 p-0">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path fill="currentColor" d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23 5.45-6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"></path></svg>
+      </a>
+      <a href="/apply" class="btn btn-lantern px-5 py-2 text-sm">Apply</a>
+    </div>
+  </div>
+</header>

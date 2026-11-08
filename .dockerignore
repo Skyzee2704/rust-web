@@ -1,0 +1,7 @@
+target
+.git
+node_modules
+*.pem
+.env
+.env.local
+.env.*.local

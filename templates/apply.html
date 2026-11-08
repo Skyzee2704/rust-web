@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block main %}
+<main id="main" class="relative min-h-[80vh] overflow-hidden px-4 py-16">
+  <div class="mist-bg opacity-60"></div>
+  <div class="relative mx-auto max-w-6xl">
+    <div class="flex items-center gap-4">
+      <img src="{{ first_image }}" alt="{{ first_name }} sample" data-nft="1" data-color="{{ first_color }}" draggable="false" class="object-cover h-16 w-16 shrink-0 -rotate-6 rounded-[20px] border-4 border-white shadow-[0_12px_30px_-10px_rgba(42,138,160,0.8)] md:h-20 md:w-20">
+      <div>
+        <p class="label text-peach-deep">Whitelist</p>
+        <h1 class="mt-1 font-display text-5xl font-semibold md:text-7xl">Get on the <em class="text-sky">list.</em></h1>
+      </div>
+    </div>
+    <p class="mt-3 max-w-lg text-current/70">Connect X, finish the quests, drop your wallet.</p>
+    <div class="mt-10 grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div id="apply-root" data-signed-in="{% if signed_in %}1{% else %}0{% endif %}" data-username="{{ username }}" data-demo="{% if demo_mode %}1{% else %}0{% endif %}">
+        {% if has_auth_error %}
+        <p role="alert" class="mb-6 rounded-xl border border-peach/50 bg-peach/10 p-4 text-peach-deep">{{ auth_error }}</p>
+        {% endif %}
+        {% if show_checking %}
+        <div id="apply-checking" class="glass p-8 text-center" role="status">
+          <p class="font-display text-xl">Checking your application…</p>
+        </div>
+        {% endif %}
+        <form id="apply-form" class="space-y-6{% if show_checking %} hidden{% endif %}" novalidate>
+          <ol class="glass grid grid-cols-4 gap-2 p-4" aria-label="Progress">
+            {% for pip in pips %}
+            <li class="text-center" data-step {% if pip.current %}aria-current="step"{% endif %}>
+              <span class="mx-auto flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold transition {{ pip.klass }}">{{ pip.mark }}</span>
+              <span class="label mt-2 block text-[0.58rem] text-current/60">{{ pip.label }}</span>
+            </li>
+            {% endfor %}
+          </ol>
+          {% if demo_mode %}
+          <div role="status" class="rounded-2xl border border-dashed border-peach/50 bg-peach/10 p-4 text-sm text-peach-deep">⚠️ Demo mode: env not configured. You can explore the flow, but submissions are disabled until X OAuth and Google Sheets env vars are set.</div>
+          {% endif %}
+          <fieldset class="glass p-6">
+            <legend class="sr-only">Step 1: Connect X</legend>
+            <p class="label text-sky">Step 1</p>
+            <h2 class="mt-1 font-display text-2xl font-semibold">Connect your X account</h2>
+            {% if signed_in %}
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p>Connected as <strong>@{{ username }}</strong> ✓</p>
+              <a class="btn text-sm" href="/api/auth/signout?redirect=/apply">Disconnect</a>
+            </div>
+            {% else if auth_configured %}
+            <a class="btn btn-lantern mt-4" href="/api/auth/signin/twitter?redirect=/apply">Connect X</a>
+            {% else %}
+            <button type="button" class="btn btn-lantern mt-4" disabled>Connect X (not configured)</button>
+            {% endif %}
+          </fieldset>
+          <fieldset class="glass p-6{% if quests_locked %} opacity-60{% endif %}" {% if quests_locked %}disabled{% endif %} data-quests>
+            <legend class="sr-only">Step 2: Quests</legend>
+            <p class="label text-sky">Step 2</p>
+            <h2 class="mt-1 font-display text-2xl font-semibold">Quests (<span id="quest-progress">0</span>/{{ task_count }})</h2>
+            <ul class="mt-4 space-y-3">
+              {% for t in tasks %}
+              <li data-task-id="{{ t.id }}" data-required="{% if t.required %}1{% else %}0{% endif %}" data-requires-link="{% if t.requires_link %}1{% else %}0{% endif %}" class="rounded-2xl border border-sky/15 bg-white/[0.03] p-4 transition-colors duration-500">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p class="font-display font-semibold">{{ t.title }} {% if t.required %}<span class="text-peach-deep">*</span>{% else %}<span class="text-xs text-current/50">(optional)</span>{% endif %}</p>
+                    <p class="text-sm text-current/65">{{ t.description }}</p>
+                  </div>
+                  <div class="flex shrink-0 items-center gap-3">
+                    <a href="{{ t.url }}" target="_blank" rel="noopener noreferrer" data-open class="btn px-4 py-2 text-sm">Open task ↗</a>
+                    <label data-done-flag class="hidden items-center gap-2 text-sm font-semibold text-mint">
+                      <input type="checkbox" class="h-5 w-5 accent-mint" disabled checked>
+                      Done
+                    </label>
+                  </div>
+                </div>
+                {% if t.requires_link %}
+                <div class="mt-3">
+                  <label for="link-{{ t.id }}" class="block text-sm font-semibold">Link to your reply *</label>
+                  <input id="link-{{ t.id }}" data-link type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://x.com/yourname/status/…" class="field mt-1 text-sm">
+                  <p data-link-help class="mt-1 text-xs text-current/55">On X, tap Share on your reply, then Copy link, and paste it here.</p>
+                  <button type="button" data-complete class="btn mt-3 px-4 py-2 text-sm" disabled>Complete ✓</button>
+                </div>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </fieldset>
+          <fieldset class="glass p-6 opacity-60" disabled data-wallet-step>
+            <legend class="sr-only">Step 3: Wallet</legend>
+            <p class="label text-sky">Step 3</p>
+            <h2 class="mt-1 font-display text-2xl font-semibold">Your EVM wallet</h2>
+            <label for="wallet" class="mt-4 block text-sm font-semibold">Wallet address *</label>
+            <input id="wallet" inputmode="text" autocomplete="off" spellcheck="false" placeholder="0x…" aria-describedby="wallet-help" class="field mt-1 font-mono text-sm">
+            <p id="wallet-help" class="mt-1 text-xs text-current/55">Use a wallet you control. No exchange addresses.</p>
+            <div aria-hidden="true" class="absolute -left-[9999px]">
+              <label for="website">Website</label>
+              <input id="website" tabindex="-1" autocomplete="off">
+            </div>
+          </fieldset>
+          <p id="apply-error" role="alert" class="hidden rounded-xl border border-peach/50 bg-peach/10 p-4 text-peach-deep"></p>
+          <button type="submit" id="apply-submit" class="btn btn-lantern w-full text-lg" disabled>Submit application</button>
+        </form>
+      </div>
+      <aside class="glass section-dark overflow-hidden !bg-navy p-6 lg:sticky lg:top-28">
+        <div class="ripple-lines"></div>
+        <div class="relative flex items-center gap-4">
+          <div class="flex shrink-0 flex-col items-center">
+            <div class="relative h-20 w-20">
+              <span class="animate-spin-slow absolute inset-0 rounded-full border border-dashed border-sky-light/60"></span>
+              <span class="absolute inset-3 flex items-center justify-center rounded-full bg-sky/20 font-display text-2xl">{{ task_count }}</span>
+            </div>
+            <span class="label mt-1 text-[0.55rem] text-current/50">quests</span>
+          </div>
+          <div>
+            <p class="font-display text-2xl font-semibold">How it works</p>
+            <p class="label text-current/50">{{ required_count }} required quests</p>
+          </div>
+        </div>
+        <ol class="relative mt-6 space-y-3">
+          {% for h in how %}
+          <li class="flex gap-3 text-sm text-current/75"><span class="label mt-0.5 text-peach">{{ h.num }}</span>{{ h.text }}</li>
+          {% endfor %}
+        </ol>
+        <div class="relative mt-6 grid grid-cols-3 gap-2">
+          <div class="rounded-2xl border border-sky/15 bg-white/[0.03] p-3 text-center"><p class="label text-[0.58rem] text-current/50">Supply</p><p class="mt-1 truncate font-display text-lg">{{ supply_label }}</p></div>
+          <div class="rounded-2xl border border-sky/15 bg-white/[0.03] p-3 text-center"><p class="label text-[0.58rem] text-current/50">Hidden</p><p class="mt-1 truncate font-display text-lg">{{ unrevealed }}</p></div>
+          <div class="rounded-2xl border border-sky/15 bg-white/[0.03] p-3 text-center"><p class="label text-[0.58rem] text-current/50">Chain</p><p class="mt-1 truncate font-display text-lg">{{ chain }}</p></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+{% endblock %}

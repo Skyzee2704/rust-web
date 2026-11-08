@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-scroll-behavior="smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ shell.title }}</title>
+  <meta name="description" content="{{ shell.description }}">
+  <meta name="theme-color" content="#79d3df">
+  <meta property="og:title" content="{{ shell.site_name }}">
+  <meta property="og:description" content="{{ shell.og_description }}">
+  <meta property="og:url" content="{{ shell.site_url }}">
+  <meta property="og:site_name" content="{{ shell.site_name }}">
+  <meta property="og:image" content="{{ shell.og_image }}">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="{{ shell.site_name }}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@{{ shell.x_handle }}">
+  <meta name="twitter:title" content="{{ shell.site_name }}">
+  <meta name="twitter:description" content="{{ shell.og_description }}">
+  <meta name="twitter:image" content="{{ shell.og_image }}">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-icon.png">
+  <link rel="preload" href="/fonts/playfair.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen antialiased" data-share-host="{{ shell.share_host }}">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 btn">Skip to content</a>
+  {% if shell.show_cursor %}
+  <div id="cursor" aria-hidden="true" class="pointer-events-none fixed hidden motion-reduce:!hidden [@media(pointer:fine)]:block left-0 top-0 z-[60] -ml-2 -mt-2 h-4 w-4 rounded-full bg-sky/80 shadow-[0_0_18px_5px_rgba(121,211,223,0.6)]" style="transform: translate(-100px, -100px)"></div>
+  {% endif %}
+  {% include "partials/header.html" %}
+  {% block main %}{% endblock %}
+  {% include "partials/footer.html" %}
+  {% include "partials/widgets.html" %}
+  <script src="/js/card.js" defer></script>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
