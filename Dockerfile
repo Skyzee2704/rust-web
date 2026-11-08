@@ -4,9 +4,10 @@ FROM rust:1.99-bookworm AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
+COPY api ./api
 COPY templates ./templates
-COPY static ./static
-RUN cargo build --release
+COPY public ./public
+RUN cargo build --release --bin letheans
 
 FROM debian:bookworm-slim
 RUN apt-get update \
@@ -14,7 +15,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/target/release/letheans /usr/local/bin/letheans
-COPY --from=build /app/static /app/static
+COPY --from=build /app/public /app/public
 ENV PORT=3000
 EXPOSE 3000
 USER nobody

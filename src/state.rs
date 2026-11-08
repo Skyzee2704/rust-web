@@ -54,6 +54,12 @@ impl std::ops::Deref for AppState {
     }
 }
 
+/// `.env` first, then `.env.local` overrides (same order as Next.js).
+pub fn load_dotenv() {
+    let _ = dotenvy::from_filename(".env");
+    let _ = dotenvy::from_filename_override(".env.local");
+}
+
 impl AppState {
     pub fn from_env() -> Self {
         let auth_configured = env_nonempty("X_CLIENT_ID")

@@ -2,11 +2,12 @@
 
 use std::collections::HashSet;
 
-use axum::body::{to_bytes, Body};
+use axum::body::Body;
 use axum::extract::{Query, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use http_body_util::BodyExt;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -57,7 +58,7 @@ pub async fn apply(State(state): State<AppState>, req: axum::extract::Request) -
         );
     };
 
-    let bytes = match to_bytes(body, BODY_LIMIT).await {
+    let bytes = match read_limited(body, BODY_LIMIT).await {
         Ok(b) => b,
         Err(_) => return err(StatusCode::BAD_REQUEST, "bad_json", "Invalid request."),
     };
@@ -567,7 +568,7 @@ pub async fn auth_signin(
     let query: RedirectForm =
         serde_urlencoded::from_str(parts.uri.query().unwrap_or("")).unwrap_or_default();
     let form = if method == axum::http::Method::POST {
-        let bytes = to_bytes(body, 16 * 1024).await.unwrap_or_default();
+        let bytes = read_limited(body, 16 * 1024).await.unwrap_or_default();
         serde_urlencoded::from_bytes::<RedirectForm>(&bytes).unwrap_or_default()
     } else {
         RedirectForm::default()
@@ -609,7 +610,7 @@ pub async fn auth_signout(State(state): State<AppState>, req: axum::extract::Req
     let (parts, body) = req.into_parts();
     let query: RedirectForm =
         serde_urlencoded::from_str(parts.uri.query().unwrap_or("")).unwrap_or_default();
-    let bytes = to_bytes(body, 16 * 1024).await.unwrap_or_default();
+    let bytes = read_limited(body, 16 * 1024).await.unwrap_or_default();
     let form = serde_urlencoded::from_bytes::<RedirectForm>(&bytes).unwrap_or_default();
     let dest = form
         .redirect_to
@@ -669,6 +670,14 @@ fn nostore(status: StatusCode, body: Value) -> Response {
     res.headers_mut()
         .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
     res
+}
+
+async fn read_limited(body: Body, limit: usize) -> Result<axum::body::Bytes, ()> {
+    let bytes = body.collect().await.map_err(|_| ())?.to_bytes();
+    if bytes.len() > limit {
+        return Err(());
+    }
+    Ok(bytes)
 }
 
 fn empty(status: StatusCode) -> Response {

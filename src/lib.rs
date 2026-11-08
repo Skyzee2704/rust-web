@@ -16,4 +16,4 @@ pub mod wl;
 pub mod xlink;
 
 pub use router::router;
-pub use state::AppState;
+pub use state::{load_dotenv, AppState};

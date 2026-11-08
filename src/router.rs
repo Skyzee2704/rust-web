@@ -4,13 +4,19 @@ use std::convert::Infallible;
 use std::path::PathBuf;
 
 use axum::body::Body;
-use axum::extract::Request;
-use axum::http::HeaderValue;
+use axum::extract::{Request, State};
+use axum::http::{header, HeaderValue, StatusCode};
 use axum::middleware::{self, Next};
-use axum::response::Response;
-use axum::routing::get;
+use axum::response::{IntoResponse, Response};
+use axum::routing::{any, get};
 use axum::Router;
+use include_dir::{include_dir, Dir};
 use tower_http::services::ServeDir;
+
+/// Compiled into the Vercel function. The function filesystem does not contain
+/// the repo, so `/logo.png` and the rest are served from here when `public/`
+/// is not on disk. Locally, `public/` is served from disk first.
+static EMBEDDED_ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/public");
 
 use crate::api;
 use crate::pages;
@@ -22,8 +28,7 @@ pub fn router(state: AppState) -> Router {
         let state = state_404.clone();
         async move { Ok::<_, Infallible>(pages::not_found(&state)) }
     });
-    let serve = ServeDir::new(static_dir()).not_found_service(not_found);
-    Router::new()
+    let routes = Router::new()
         .route("/", get(pages::home))
         .route("/apply", get(pages::apply_page))
         .route("/status", get(pages::status_page))
@@ -40,8 +45,13 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/api/auth/signout",
             get(api::auth_signout).post(api::auth_signout),
-        )
-        .fallback_service(serve)
+        );
+    let routes = if static_dir().is_dir() {
+        routes.fallback_service(ServeDir::new(static_dir()).not_found_service(not_found))
+    } else {
+        routes.fallback(any(serve_embedded))
+    };
+    routes
         .layer(middleware::from_fn(security_headers))
         .with_state(state)
 }
@@ -50,12 +60,66 @@ pub fn static_dir() -> PathBuf {
     if let Ok(p) = std::env::var("STATIC_DIR") {
         return PathBuf::from(p);
     }
-    let compiled = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
+    let compiled = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("public");
     if compiled.exists() {
         compiled
     } else {
-        PathBuf::from("static")
+        PathBuf::from("public")
     }
+}
+
+fn content_type(path: &str) -> &'static str {
+    match path.rsplit('.').next() {
+        Some("css") => "text/css; charset=utf-8",
+        Some("js") => "text/javascript; charset=utf-8",
+        Some("png") => "image/png",
+        Some("jpg" | "jpeg") => "image/jpeg",
+        Some("webp") => "image/webp",
+        Some("svg") => "image/svg+xml",
+        Some("woff2") => "font/woff2",
+        Some("html") => "text/html; charset=utf-8",
+        _ => "application/octet-stream",
+    }
+}
+
+fn safe_asset_path(path: &str) -> Option<&str> {
+    let path = path.trim_start_matches('/');
+    if path.is_empty()
+        || path.contains('\\')
+        || path
+            .split('/')
+            .any(|part| part.is_empty() || part == "." || part == "..")
+    {
+        return None;
+    }
+    Some(path)
+}
+
+fn asset_response(path: &str, bytes: Vec<u8>) -> Response {
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type(path))
+        .header(header::CACHE_CONTROL, "public, max-age=86400")
+        .body(Body::from(bytes))
+        .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
+}
+
+/// Disk when `public/` is present (local and Docker). Embedded bytes on Vercel,
+/// where the compile-time path is not mounted in the function.
+async fn serve_embedded(State(state): State<AppState>, req: Request) -> Response {
+    let Some(path) = safe_asset_path(req.uri().path()) else {
+        return pages::not_found(&state);
+    };
+    let disk = static_dir().join(path);
+    if disk.is_file() {
+        if let Ok(bytes) = tokio::fs::read(&disk).await {
+            return asset_response(path, bytes);
+        }
+    }
+    if let Some(file) = EMBEDDED_ASSETS.get_file(path) {
+        return asset_response(path, file.contents().to_vec());
+    }
+    pages::not_found(&state)
 }
 
 async fn security_headers(req: Request<Body>, next: Next) -> Response {
@@ -76,13 +140,13 @@ async fn security_headers(req: Request<Body>, next: Next) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::body::to_bytes;
     use axum::http::{header, Method, Request, StatusCode};
+    use http_body_util::BodyExt;
     use serde_json::Value;
     use tower::ServiceExt;
 
     async fn text(res: Response) -> String {
-        let bytes = to_bytes(res.into_body(), 8_000_000).await.unwrap();
+        let bytes = res.into_body().collect().await.unwrap().to_bytes();
         String::from_utf8(bytes.to_vec()).unwrap()
     }
 
@@ -215,6 +279,15 @@ mod tests {
         ] {
             assert!(contains_text(&status_html, s), "status missing: {s}");
         }
+    }
+
+    #[test]
+    fn embedded_assets_include_the_public_files() {
+        assert!(EMBEDDED_ASSETS.get_file("logo.png").is_some());
+        assert!(EMBEDDED_ASSETS.get_file("css/app.css").is_some());
+        assert!(EMBEDDED_ASSETS.get_file("js/card.js").is_some());
+        assert!(EMBEDDED_ASSETS.get_file("nft/base.png").is_some());
+        assert!(EMBEDDED_ASSETS.get_file("fonts/inter.woff2").is_some());
     }
 
     #[tokio::test]
